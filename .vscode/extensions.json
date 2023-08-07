@@ -1,0 +1,6 @@
+{
+	"recommendations": [
+		// optional
+		"esbenp.prettier-vscode"
+	]
+}
