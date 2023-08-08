@@ -1,0 +1,13 @@
+diff --git a/node_modules/http-mitm-proxy/dist/lib/proxy.js b/node_modules/http-mitm-proxy/dist/lib/proxy.js
+index e1ea8b4..62b4110 100644
+--- a/node_modules/http-mitm-proxy/dist/lib/proxy.js
++++ b/node_modules/http-mitm-proxy/dist/lib/proxy.js
+@@ -871,7 +871,7 @@ class Proxy {
+                 path: ctx.clientToProxyRequest.url,
+                 host: hostPort.host,
+                 port: hostPort.port,
+-                headers,
++                headers: ctx.clientToProxyRequest.headers,
+                 agent: ctx.isSSL ? self.httpsAgent : self.httpAgent,
+             };
+             return self._onRequest(ctx, (err) => {

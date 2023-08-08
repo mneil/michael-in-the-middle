@@ -4,6 +4,7 @@
 	"description": "",
 	"main": "src/index.js",
 	"scripts": {
+		"postinstall": "patch-package",
 		"test": "mocha -v --require ./test/hooks.js --parallel test/**/*.test.js",
 		"format": "prettier --write --config package.json lib",
 		"format:check": "npm run format -- --check --no-write"
@@ -26,9 +27,11 @@
 		"hpagent": "^1.2.0",
 		"lodash": "^4.17.21",
 		"mocha": "^10.2.0",
+		"patch-package": "^8.0.0",
 		"prettier": "^2.8.8"
 	},
 	"dependencies": {
+		"@smithy/signature-v4": "^2.0.2",
 		"http-mitm-proxy": "^1.0.0"
 	}
 }

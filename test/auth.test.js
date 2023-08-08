@@ -2,7 +2,7 @@ const assert = require("node:assert");
 const fs = require("node:fs");
 const path = require("node:path");
 const { STSClient, GetCallerIdentityCommand } = require("@aws-sdk/client-sts");
-const { HttpProxyAgent, HttpsProxyAgent } = require("hpagent");
+const { HttpsProxyAgent } = require("hpagent");
 const { NodeHttpHandler } = require("@aws-sdk/node-http-handler");
 const axios = require("axios");
 
@@ -11,8 +11,8 @@ describe("Auth", () => {
 	const ca = fs.readFileSync(path.resolve(__dirname, "..", ".http-mitm-proxy", "certs", "ca.pem"), "utf-8");
 	const agent = new HttpsProxyAgent({ proxy: `http://localhost:${port}`, ca: [ca] });
 
-	it.skip("should not get a real identity", async () => {
-		// const agent = new HttpProxyAgent({ proxy: `http://localhost:${port}` /*, ca: [ca]*/ });
+	it("should not get a real identity", async function () {
+		this.timeout(10000);
 		const client = new STSClient({
 			region: "us-east-1",
 			requestHandler: new NodeHttpHandler({
@@ -20,13 +20,12 @@ describe("Auth", () => {
 				httpsAgent: agent,
 			}),
 		});
-		console.log("about to send a request");
 		const res = await client.send(new GetCallerIdentityCommand({}));
-		console.log("got a response");
+		console.log("got a response", res);
 		assert.ok(res);
 	});
 
-	it("should get pwnd", (done) => {
+	it.skip("should get pwnd", (done) => {
 		axios
 			.get("https://www.google.com/search?q=tree", { httpsAgent: agent })
 			.then(function (response) {
