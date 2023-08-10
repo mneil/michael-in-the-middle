@@ -21,7 +21,7 @@ describe("Auth", () => {
 			}),
 		});
 		const res = await client.send(new GetCallerIdentityCommand({}));
-		console.log("got a response", res);
+		// console.log("got a response", res);
 		assert.ok(res);
 	});
 

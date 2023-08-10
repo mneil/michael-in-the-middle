@@ -31,7 +31,6 @@
 		"prettier": "^2.8.8"
 	},
 	"dependencies": {
-		"@smithy/signature-v4": "^2.0.2",
 		"http-mitm-proxy": "^1.0.0"
 	}
 }

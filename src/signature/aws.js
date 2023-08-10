@@ -1,21 +1,4 @@
 const crypto = require("node:crypto");
-const { SignatureV4 } = require("@smithy/signature-v4");
-
-class sha256 {
-	constructor(key) {
-		if (!key) {
-			this.hash = crypto.createHash("sha256");
-		} else {
-			this.hash = crypto.createHmac("sha256", key);
-		}
-	}
-	update(value) {
-		this.hash.update(value);
-	}
-	digest(format) {
-		return this.hash.digest(format);
-	}
-}
 
 class Signature {
 	#signedHeaders = [];
@@ -73,44 +56,10 @@ class Signature {
 		if (this.#date) {
 			return this.#date;
 		}
-		this.#date = this.ISOdate.substring(0, 7);
+		this.#date = this.ISOdate.substring(0, 8);
 		return this.#date;
 	}
-
-	async credentials() {
-		if (this.#credentials) {
-			return this.#credentials;
-		}
-		await Promise.resolve();
-		this.#credentials = {};
-		return this.#credentials;
-	}
-	async sign() {
-		const stringToSign = await this._stringToSign();
-
-		const sig = new SignatureV4({
-			credentials: await this.credentials(),
-			region: this.region,
-			service: this.service,
-			sha256: sha256,
-		});
-
-		const d = new Date();
-		d.setUTCFullYear(this.#ISOdate.slice(0, 4));
-		d.setUTCMonth(Number(this.#ISOdate.slice(4, 6)) - 1);
-		d.setUTCDate(this.#ISOdate.slice(6, 8));
-		d.setUTCHours(this.#ISOdate.slice(9, 11));
-		d.setUTCMinutes(this.#ISOdate.slice(11, 13));
-		d.setUTCSeconds(this.#ISOdate.slice(13, 15));
-
-		this.#signature = await sig.sign(stringToSign, {
-			signingDate: d,
-		});
-
-		return this.#signature;
-	}
-
-	async scope() {
+	get scope() {
 		if (this.#scope) {
 			return this.#scope;
 		}
@@ -122,18 +71,44 @@ class Signature {
 		this.#scope = `${scope.join("/")}`;
 		return this.#scope;
 	}
-
-	async _stringToSign() {
-		const canonical = this._canonicalRequest();
+	async credentials() {
+		if (this.#credentials) {
+			return this.#credentials;
+		}
+		await Promise.resolve();
+		this.#credentials = {};
+		return this.#credentials;
+	}
+	async sign() {
+		const stringToSign = this.#stringToSign();
+		const signingKey = await this.#signingKey();
+		const hash = crypto.createHmac("sha256", signingKey);
+		hash.update(stringToSign);
+		this.#signature = Buffer.from(hash.digest()).toString("hex");
+		return this.#signature;
+	}
+	async #signingKey() {
+		const hmac = (key, data) => {
+			const hash = crypto.createHmac("sha256", key);
+			hash.update(data);
+			const digest = hash.digest(undefined);
+			return digest;
+		};
+		let key = `AWS4${(await this.credentials()).secretAccessKey}`;
+		for (const signable of [this.date, this.region, this.service, "aws4_request"]) {
+			key = hmac(key, signable);
+		}
+		return key;
+	}
+	#stringToSign() {
+		const canonical = this.#canonicalRequest();
 		const hash = crypto.createHash("sha256");
 		hash.update(canonical);
-		const result = Buffer.from(await hash.digest()).toString("hex");
-		const stringToSign = "AWS4-HMAC-SHA256\n" + `${this.ISOdate}\n` + `${await this.scope()}` + "\n" + result;
+		const result = Buffer.from(hash.digest()).toString("hex");
+		const stringToSign = "AWS4-HMAC-SHA256\n" + `${this.ISOdate}\n` + `${this.scope}` + "\n" + result;
 		return stringToSign;
 	}
-
-	// keep
-	_canonicalRequest() {
+	#canonicalRequest() {
 		const canonicalRequest =
 			`${this.request.method}\n` +
 			`${this.request.url}\n` +
