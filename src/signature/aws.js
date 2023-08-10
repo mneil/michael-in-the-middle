@@ -1,4 +1,22 @@
 const crypto = require("node:crypto");
+const { fromInstanceMetadata, fromIni, fromEnv } = require("@aws-sdk/credential-providers"); // ES6 import
+
+async function credentialChain() {
+	let credentials;
+	try {
+		credentials = await fromEnv({})();
+		return credentials;
+	} catch (e) {}
+	try {
+		credentials = await fromInstanceMetadata({})();
+		return credentials;
+	} catch (e) {}
+	try {
+		credentials = await fromIni({})();
+		return credentials;
+	} catch (e) {}
+	throw new Error("Unable to obtain AWS Credentials");
+}
 
 class Signature {
 	#signedHeaders = [];
@@ -75,8 +93,7 @@ class Signature {
 		if (this.#credentials) {
 			return this.#credentials;
 		}
-		await Promise.resolve();
-		this.#credentials = {};
+		this.#credentials = await credentialChain();
 		return this.#credentials;
 	}
 	async sign() {

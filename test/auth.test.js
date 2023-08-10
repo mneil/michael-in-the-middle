@@ -15,13 +15,17 @@ describe("Auth", () => {
 		this.timeout(10000);
 		const client = new STSClient({
 			region: "us-east-1",
+			credentials: {
+				accessKeyId: "a",
+				secretAccessKey: "b",
+			},
 			requestHandler: new NodeHttpHandler({
 				httpAgent: agent,
 				httpsAgent: agent,
 			}),
 		});
 		const res = await client.send(new GetCallerIdentityCommand({}));
-		// console.log("got a response", res);
+		console.log("got a response", res);
 		assert.ok(res);
 	});
 
