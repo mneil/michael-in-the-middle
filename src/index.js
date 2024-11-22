@@ -36,6 +36,53 @@ function run(port = 5465) {
 			console.error("proxy error:", err);
 		});
 
+		proxy.onResponse(
+			/**
+			 * @type {import('http-mitm-proxy/types').OnRequestParams}
+			 */
+			(ctx, next) => {
+				debug("onResponse");
+				next();
+			},
+		);
+		proxy.onResponseHeaders(
+			/**
+			 * @type {import('http-mitm-proxy/types').OnRequestParams}
+			 */
+			(ctx, next) => {
+				debug("onResponseHeaders:proxyToClientResponse", ctx.proxyToClientResponse.headers);
+				debug("onResponseHeaders:serverToProxyResponse", ctx.serverToProxyResponse.headers);
+				next();
+			},
+		);
+		proxy.onResponseData(
+			/**
+			 * @type {import('http-mitm-proxy/types').OnRequestDataCallback}
+			 */
+			(ctx, chunk, next) => {
+				debug("onResponseData", chunk.toString());
+				next(null, chunk);
+			},
+		);
+		proxy.onResponseEnd(
+			/**
+			 * @type {import('http-mitm-proxy/types').OnRequestParams}
+			 */
+			(ctx, next) => {
+				debug("onResponseEnd");
+				next();
+			},
+		);
+		proxy.onRequestHeaders(
+			/**
+			 * @type {import('http-mitm-proxy/types').OnRequestParams}
+			 */
+			(ctx, next) => {
+				debug("onRequestHeaders:proxyToServerRequest", ctx.proxyToServerRequestOptions.headers);
+				next();
+			},
+		);
+
 		proxy.onRequest(
 			/**
 			 * @type {import('http-mitm-proxy/types').OnRequestParams}
@@ -48,20 +95,24 @@ function run(port = 5465) {
 				recorder.on("finish", () => {
 					const sig = new Signature(ctx.clientToProxyRequest, recorder.chunks);
 					sig.sign().then(() => {
+						debug("signature generated");
 						const reqStream = recorder.rewind();
 						// uh, this works. Replace the incoming stream with a new readable and let the proxy continue...
 						const headers = ctx.clientToProxyRequest.headers;
 						headers.authorization = sig.authorization;
 						ctx.clientToProxyRequest = reqStream;
+						debug("signed request on behalf of user");
 						callback();
 					});
 				});
 				ctx.clientToProxyRequest.pipe(recorder);
 
 				ctx.onRequestData(function (ctx, chunk, next) {
+					debug("onRequestData", chunk.toString());
 					return next(null, chunk);
 				});
 				ctx.onRequestEnd(function (ctx, done) {
+					debug("ending request");
 					return done();
 				});
 			},

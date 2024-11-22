@@ -5,6 +5,8 @@
 	"main": "src/index.js",
 	"scripts": {
 		"postinstall": "patch-package",
+		"start": "node ./src/index.js",
+		"build": "",
 		"test": "mocha -v --require ./test/hooks.js --parallel test/**/*.test.js",
 		"format": "prettier --write --config package.json lib",
 		"format:check": "npm run format -- --check --no-write"
@@ -22,7 +24,6 @@
 	"devDependencies": {
 		"@aws-sdk/client-sts": "^3.363.0",
 		"@aws-sdk/node-http-handler": "^3.360.0",
-		"axios": "^1.4.0",
 		"debug": "^4.3.4",
 		"hpagent": "^1.2.0",
 		"mocha": "^10.2.0",

@@ -1,4 +1,5 @@
 const crypto = require("node:crypto");
+const debug = require("debug")("signature:aws");
 const { fromInstanceMetadata, fromIni, fromEnv } = require("@aws-sdk/credential-providers"); // ES6 import
 
 async function credentialChain() {
@@ -33,6 +34,7 @@ class Signature {
 		this.region = "";
 		this.service = "";
 	}
+
 	get authorization() {
 		if (!this.#signature) {
 			throw new Error("Must sign payload before getting the athorization header");
@@ -43,24 +45,25 @@ class Signature {
 		return header;
 	}
 	get canonicalHeaders() {
-		return Object.entries(this.request.headers)
-			.filter(([key, _]) => {
-				return !["authorization", "connection", "user-agent"].includes(key);
-			})
-			.sort();
+		return this.signedHeaders.map((header) => {
+			return [header, this.request.headers[header]];
+		});
 	}
 	get signedHeaders() {
 		if (this.#signedHeaders.length) {
 			return this.#signedHeaders;
 		}
-		this.#signedHeaders = this.request.headers.authorization.split("SignedHeaders=")[1].split(",")[0].split(";");
+		this.#signedHeaders = this.request.headers.authorization.split("SignedHeaders=")[1].split(",")[0].split(";").sort();
 		return this.#signedHeaders;
 	}
 	get bodySha256() {
 		if (this.#bodySha256) {
 			return this.#bodySha256;
 		}
-		this.#bodySha256 = this.canonicalHeaders.filter(([h, _]) => h == "x-amz-content-sha256")[0][1];
+		const body = this.chunks.join();
+		const hash = crypto.createHash("sha256");
+		hash.update(body);
+		this.#bodySha256 = Buffer.from(hash.digest()).toString("hex");
 		return this.#bodySha256;
 	}
 	get ISOdate() {
@@ -126,6 +129,8 @@ class Signature {
 		return stringToSign;
 	}
 	#canonicalRequest() {
+		debug("canonicalRequest:canonicalHeaders", this.canonicalHeaders);
+		debug("canonicalRequest:bodySha256", this.bodySha256);
 		const canonicalRequest =
 			`${this.request.method}\n` +
 			`${this.request.url}\n` +
@@ -135,8 +140,8 @@ class Signature {
 				.sort()
 				.join("\n") +
 			"\n\n" +
-			`${this.signedHeaders.join(";")}\n` +
-			this.bodySha256;
+			`${this.signedHeaders.join(";")}` +
+			(this.bodySha256 ? `\n${this.bodySha256}` : "");
 		return canonicalRequest;
 	}
 }
