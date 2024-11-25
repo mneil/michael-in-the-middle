@@ -50,3 +50,9 @@ You should receive a response with information about `MyProfile` similar to:
 	"Arn": "arn:aws:iam::123456789101:user/someusername"
 }
 ```
+
+Requests that do not match an upstream cloud service provider will pass through:
+
+```sh
+wget --ca-certificate=${PWD}/.http-mitm-proxy/certs/ca.pem -e use_proxy=yes -e https_proxy=$HTTPS_PROXY https://google.com
+```

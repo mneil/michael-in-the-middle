@@ -70,15 +70,18 @@ function run(port = 5465) {
 
 				const recorder = new BodyRecorder();
 				recorder.on("finish", async () => {
-					const sig = new Signature(ctx.clientToProxyRequest, recorder.chunks);
-					await sig.sign();
-					debug("signature generated");
-					const reqStream = recorder.rewind();
-					// uh, this works. Replace the incoming stream with a new readable and let the proxy continue...
-					const headers = ctx.clientToProxyRequest.headers;
-					headers.authorization = await sig.authorization();
-					ctx.clientToProxyRequest = reqStream;
-					debug("signed request on behalf of user");
+					if (ctx.clientToProxyRequest.headers.host?.endsWith("amazonaws.com")) {
+						debug("signing AWS request on behalf of user");
+						const sig = new Signature(ctx.clientToProxyRequest, recorder.chunks);
+						await sig.sign();
+						debug("signature generated");
+						const reqStream = recorder.rewind();
+						// uh, this works. Replace the incoming stream with a new readable and let the proxy continue...
+						const headers = ctx.clientToProxyRequest.headers;
+						headers.authorization = await sig.authorization();
+						ctx.clientToProxyRequest = reqStream;
+						debug("signed request on behalf of user");
+					}
 					callback();
 				});
 				ctx.clientToProxyRequest.pipe(recorder);
