@@ -1,6 +1,6 @@
 const assert = require("node:assert");
 const { STSClient, GetCallerIdentityCommand } = require("@aws-sdk/client-sts");
-const { handler } = require("./agent");
+const { handler } = require("../agent");
 
 describe("Auth", () => {
 	it("should not get a real identity", async function () {

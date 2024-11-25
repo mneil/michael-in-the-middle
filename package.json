@@ -8,6 +8,8 @@
 		"start": "node ./src/index.js",
 		"build": "",
 		"test": "mocha -v --require ./test/hooks.js --parallel test/**/*.test.js",
+		"test:integration": "mocha -v --parallel test/integration/*.test.js",
+		"test:unit": "mocha -v --parallel test/unit/*.test.js",
 		"format": "prettier --write --config package.json lib",
 		"format:check": "npm run format -- --check --no-write"
 	},

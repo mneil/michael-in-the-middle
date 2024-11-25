@@ -35,11 +35,11 @@ class Signature {
 		this.service = "";
 	}
 
-	get authorization() {
+	async authorization() {
 		if (!this.#signature) {
 			throw new Error("Must sign payload before getting the athorization header");
 		}
-		const header = `AWS4-HMAC-SHA256 Credential=${this.#credentials.accessKeyId}/${
+		const header = `AWS4-HMAC-SHA256 Credential=${(await this.credentials()).accessKeyId}/${
 			this.#scope
 		}, SignedHeaders=${this.signedHeaders.join(";")}, Signature=${this.#signature}`;
 		return header;
@@ -148,4 +148,5 @@ class Signature {
 
 module.exports = {
 	Signature,
+	credentialChain,
 };
