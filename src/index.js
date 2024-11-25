@@ -1,31 +1,8 @@
-const stream = require("node:stream");
-const { Proxy } = require("http-mitm-proxy");
+require("./debug");
 const debug = require("debug")("proxy");
+const { Proxy } = require("http-mitm-proxy");
+const { BodyRecorder } = require("./recorder");
 const { Signature } = require("./signature/aws");
-
-class BodyRecorder extends stream.Transform {
-	constructor() {
-		super();
-		/**
-		 * @type {Buffer[]}
-		 */
-		this.chunks = [];
-	}
-	/**
-	 * @param {Buffer} buf
-	 * @param {BufferEncoding} enc
-	 * @param {ErrorCallback} next
-	 */
-	_transform(buf, enc, next) {
-		this.chunks.push(buf);
-		next();
-	}
-	rewind() {
-		const out = new stream.PassThrough();
-		this.chunks.forEach((chunk) => out.write(chunk));
-		return out;
-	}
-}
 
 function run(port = 5465) {
 	debug("server starting on port", port);
