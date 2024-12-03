@@ -1,8 +1,8 @@
 const assert = require("node:assert");
-const aws = require("../../src/signature/aws");
+const aws = require("../../src/provider/aws");
 
-describe("Signature", () => {
-	describe("aws", () => {
+describe("aws", () => {
+	describe("signature", () => {
 		it("Should create correct headers", async function () {
 			this.timeout(10000);
 

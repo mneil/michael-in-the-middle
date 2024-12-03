@@ -1,5 +1,5 @@
 const crypto = require("node:crypto");
-const debug = require("debug")("signature:aws");
+const debug = require("debug")("mitm:signature:aws");
 const { fromInstanceMetadata, fromIni, fromEnv } = require("@aws-sdk/credential-providers"); // ES6 import
 
 async function credentialChain() {

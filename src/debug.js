@@ -1,4 +1,4 @@
-const debug = require("debug")("unknown");
+const debug = require("debug")("mitm:unknown");
 
 /**
  * http-mitm-proxy is calling console.debug. That's just an alias to console.log
